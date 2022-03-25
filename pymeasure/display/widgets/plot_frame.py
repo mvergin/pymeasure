@@ -36,18 +36,20 @@ log.addHandler(logging.NullHandler())
 
 
 class PlotFrame(QtGui.QFrame):
-    """ Combines a PyQtGraph Plot with Crosshairs. Refreshes
+    """Combines a PyQtGraph Plot with Crosshairs. Refreshes
     the plot based on the refresh_time, and allows the axes
     to be changed on the fly, which updates the plotted data
     """
 
-    LABEL_STYLE = {'font-size': '10pt', 'font-family': 'Arial', 'color': '#000000'}
+    LABEL_STYLE = {"font-size": "10pt", "font-family": "Arial", "color": "#000000"}
     updated = QtCore.QSignal()
     ResultsClass = ResultsCurve
     x_axis_changed = QtCore.QSignal(str)
     y_axis_changed = QtCore.QSignal(str)
 
-    def __init__(self, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True, parent=None):
+    def __init__(
+        self, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True, parent=None
+    ):
         super().__init__(parent)
         self.refresh_time = refresh_time
         self.check_status = check_status
@@ -63,25 +65,35 @@ class PlotFrame(QtGui.QFrame):
         self.setMidLineWidth(1)
 
         vbox = QtGui.QVBoxLayout(self)
+        hbox = QtGui.QHBoxLayout()
 
-        self.plot_widget = pg.PlotWidget(self, background='#ffffff')
+        self.plot_widget = pg.PlotWidget(self, background="#ffffff")
+        self.values = QtGui.QLabel(self)
+        self.values.setMinimumSize(QtCore.QSize(0, 20))
+        self.values.setStyleSheet("background: #fff")
+        self.values.setText("TUBS powered")
+        self.values.setAlignment(QtCore.Qt.AlignLeft)
         self.coordinates = QtGui.QLabel(self)
         self.coordinates.setMinimumSize(QtCore.QSize(0, 20))
         self.coordinates.setStyleSheet("background: #fff")
         self.coordinates.setText("")
         self.coordinates.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter
+        )
 
         vbox.addWidget(self.plot_widget)
-        vbox.addWidget(self.coordinates)
+        hbox.addWidget(self.values)
+        hbox.addStretch()
+        hbox.addWidget(self.coordinates)
+        vbox.addLayout(hbox)
         self.setLayout(vbox)
 
         self.plot = self.plot_widget.getPlotItem()
 
-        self.crosshairs = Crosshairs(self.plot,
-                                     pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.DashLine))
+        self.crosshairs = Crosshairs(
+            self.plot, pen=pg.mkPen(color="#AAAAAA", style=QtCore.Qt.DashLine)
+        )
         self.crosshairs.coordinates.connect(self.update_coordinates)
-
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.update_curves)
         self.timer.timeout.connect(self.crosshairs.update)
@@ -90,6 +102,29 @@ class PlotFrame(QtGui.QFrame):
 
     def update_coordinates(self, x, y):
         self.coordinates.setText(f"({x:g}, {y:g})")
+
+    def pretty_qt_df_print(self, df):
+        def pretty_string(num):
+            txt = f"{num:.3f}"
+            return txt
+
+        colors = ["black", "red", "green", "blue", "cyan", "magenta", "yellow", "gray"]
+        temp = df.to_string(index=False, float_format=lambda x: f"{x:.3f}")
+        for idx, column in enumerate(df):
+            temp = temp.replace(
+                column,
+                f"<font color={colors[idx]}>{column}</font>",
+            )
+            temp = temp.replace(
+                pretty_string(df[column].values[0]),
+                f"<font color={colors[idx]}>{pretty_string(df[column].values[0])}</font>",
+            )
+        temp = temp.replace("\n", "<br>")
+        return temp
+
+    def update_values(self, df):
+        if not df.empty:
+            self.values.setText(self.pretty_qt_df_print(df))
 
     def update_curves(self):
         for item in self.plot.items:
@@ -101,8 +136,7 @@ class PlotFrame(QtGui.QFrame):
                     item.update_data()
 
     def parse_axis(self, axis):
-        """ Returns the units of an axis by searching the string
-        """
+        """Returns the units of an axis by searching the string"""
         units_pattern = r"\((?P<units>\w+)\)"
         try:
             match = re.search(units_pattern, axis)
@@ -110,9 +144,9 @@ class PlotFrame(QtGui.QFrame):
             match = None
 
         if match:
-            if 'units' in match.groupdict():
-                label = re.sub(units_pattern, '', axis)
-                return label, match.groupdict()['units']
+            if "units" in match.groupdict():
+                label = re.sub(units_pattern, "", axis)
+                return label, match.groupdict()["units"]
         else:
             return axis, None
 
@@ -122,7 +156,7 @@ class PlotFrame(QtGui.QFrame):
                 item.x = axis
                 item.update_data()
         label, units = self.parse_axis(axis)
-        self.plot.setLabel('bottom', label, units=units, **self.LABEL_STYLE)
+        self.plot.setLabel("bottom", label, units=units, **self.LABEL_STYLE)
         self.x_axis = axis
         self.x_axis_changed.emit(axis)
 
@@ -132,6 +166,6 @@ class PlotFrame(QtGui.QFrame):
                 item.y = axis
                 item.update_data()
         label, units = self.parse_axis(axis)
-        self.plot.setLabel('left', label, units=units, **self.LABEL_STYLE)
+        self.plot.setLabel("left", label, units=units, **self.LABEL_STYLE)
         self.y_axis = axis
         self.y_axis_changed.emit(axis)

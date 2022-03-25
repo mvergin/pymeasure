@@ -24,7 +24,7 @@
 
 import logging
 import sys
-
+import pandas as pd
 import numpy as np
 import pyqtgraph as pg
 from .Qt import QtCore
@@ -44,32 +44,48 @@ def _greyscale_colormap(x):
 
 
 class ResultsCurve(pg.PlotDataItem):
-    """ Creates a curve loaded dynamically from a file through the Results object. The data can
+    """Creates a curve loaded dynamically from a file through the Results object. The data can
     be forced to fully reload on each update, useful for cases when the data is changing across
     the full file instead of just appending.
     """
 
-    def __init__(self, results, x, y, force_reload=False, **kwargs):
+    new_values = QtCore.QSignal(pd.DataFrame)
+
+    def __init__(self, results, x, y, force_reload=False, num_of_points=None, **kwargs):
         super().__init__(**kwargs)
         self.results = results
-        self.pen = kwargs.get('pen', None)
+        self.pen = kwargs.get("pen", None)
         self.x, self.y = x, y
         self.force_reload = force_reload
+        self.num_of_points = num_of_points
 
     def update_data(self):
         """Updates the data by polling the results"""
         if self.force_reload:
+            print("omegalul we reloading")
             self.results.reload()
-        data = self.results.data  # get the current snapshot
-
-        # Set x-y data
-        self.setData(data[self.x], data[self.y])
+        if self.num_of_points:
+            data = self.results.data.tail(self.num_of_points).reset_index(
+                drop=True
+            )  # get the current snapshot
+            self.setData(
+                x=data[self.x],
+                y=data[self.y],
+            )
+        else:
+            data = self.results.data
+            self.setData(
+                x=data[self.x],
+                y=data[self.y],
+            )
+        self.new_values.emit(data.tail(1))
 
 
 # TODO: Add method for changing x and y
 
+
 class ResultsImage(pg.ImageItem):
-    """ Creates an image loaded dynamically from a file through the Results
+    """Creates an image loaded dynamically from a file through the Results
     object."""
 
     def __init__(self, results, x, y, z, force_reload=False):
@@ -77,17 +93,17 @@ class ResultsImage(pg.ImageItem):
         self.x = x
         self.y = y
         self.z = z
-        self.xstart = getattr(self.results.procedure, self.x + '_start')
-        self.xend = getattr(self.results.procedure, self.x + '_end')
-        self.xstep = getattr(self.results.procedure, self.x + '_step')
+        self.xstart = getattr(self.results.procedure, self.x + "_start")
+        self.xend = getattr(self.results.procedure, self.x + "_end")
+        self.xstep = getattr(self.results.procedure, self.x + "_step")
         self.xsize = int(np.ceil((self.xend - self.xstart) / self.xstep)) + 1
-        self.ystart = getattr(self.results.procedure, self.y + '_start')
-        self.yend = getattr(self.results.procedure, self.y + '_end')
-        self.ystep = getattr(self.results.procedure, self.y + '_step')
+        self.ystart = getattr(self.results.procedure, self.y + "_start")
+        self.yend = getattr(self.results.procedure, self.y + "_end")
+        self.ystep = getattr(self.results.procedure, self.y + "_step")
         self.ysize = int(np.ceil((self.yend - self.ystart) / self.ystep)) + 1
         self.img_data = np.zeros((self.ysize, self.xsize, 4))
         self.force_reload = force_reload
-        if 'matplotlib.cm' in sys.modules:
+        if "matplotlib.cm" in sys.modules:
             self.colormap = viridis
         else:
             self.colormap = _greyscale_colormap
@@ -97,8 +113,9 @@ class ResultsImage(pg.ImageItem):
         # Scale and translate image so that the pixels are in the coorect
         # position in "data coordinates"
         self.scale(self.xstep, self.ystep)
-        self.translate(int(self.xstart / self.xstep) - 0.5,
-                       int(self.ystart / self.ystep) - 0.5)  # 0.5 so pixels centered
+        self.translate(
+            int(self.xstart / self.xstep) - 0.5, int(self.ystart / self.ystep) - 0.5
+        )  # 0.5 so pixels centered
 
     def update_data(self):
         if self.force_reload:
@@ -113,13 +130,15 @@ class ResultsImage(pg.ImageItem):
             xdat = row[self.x]
             ydat = row[self.y]
             xidx, yidx = self.find_img_index(xdat, ydat)
-            self.img_data[yidx, xidx, :] = self.colormap((row[self.z] - zmin) / (zmax - zmin))
+            self.img_data[yidx, xidx, :] = self.colormap(
+                (row[self.z] - zmin) / (zmax - zmin)
+            )
 
         # set image data, need to transpose since pyqtgraph assumes column-major order
         self.setImage(image=np.transpose(self.img_data, axes=(1, 0, 2)))
 
     def find_img_index(self, x, y):
-        """ Finds the integer image indices corresponding to the
+        """Finds the integer image indices corresponding to the
         closest x and y points of the data given some x and y data.
         """
 
@@ -142,8 +161,7 @@ class ResultsImage(pg.ImageItem):
 
 
 class BufferCurve(pg.PlotDataItem):
-    """ Creates a curve based on a predefined buffer size and allows data to be added dynamically.
-    """
+    """Creates a curve based on a predefined buffer size and allows data to be added dynamically."""
 
     data_updated = QtCore.QSignal()
 
@@ -152,12 +170,12 @@ class BufferCurve(pg.PlotDataItem):
         self._buffer = None
 
     def prepare(self, size, dtype=np.float32):
-        """ Prepares the buffer based on its size, data type """
+        """Prepares the buffer based on its size, data type"""
         self._buffer = np.empty((size, 2), dtype=dtype)
         self._ptr = 0
 
     def append(self, x, y):
-        """ Appends data to the curve with optional errors """
+        """Appends data to the curve with optional errors"""
         if self._buffer is None:
             raise Exception("BufferCurve buffer must be prepared")
         if len(self._buffer) <= self._ptr:
@@ -165,21 +183,21 @@ class BufferCurve(pg.PlotDataItem):
 
         # Set x-y data
         self._buffer[self._ptr, :2] = [x, y]
-        self.setData(self._buffer[:self._ptr, :2])
+        self.setData(self._buffer[: self._ptr, :2])
 
         self._ptr += 1
         self.data_updated.emit()
 
 
 class Crosshairs(QtCore.QObject):
-    """ Attaches crosshairs to the a plot and provides a signal with the
+    """Attaches crosshairs to the a plot and provides a signal with the
     x and y graph coordinates
     """
 
     coordinates = QtCore.QSignal(float, float)
 
     def __init__(self, plot, pen=None):
-        """ Initiates the crosshars onto a plot given the pen style.
+        """Initiates the crosshars onto a plot given the pen style.
 
         Example pen:
         pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.DashLine)
@@ -192,8 +210,9 @@ class Crosshairs(QtCore.QObject):
         plot.addItem(self.horizontal, ignoreBounds=True)
 
         self.position = None
-        self.proxy = pg.SignalProxy(plot.scene().sigMouseMoved, rateLimit=60,
-                                    slot=self.mouseMoved)
+        self.proxy = pg.SignalProxy(
+            plot.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved
+        )
         self.plot = plot
 
     def hide(self):
@@ -205,7 +224,7 @@ class Crosshairs(QtCore.QObject):
         self.horizontal.show()
 
     def update(self):
-        """ Updates the mouse position based on the data in the plot. For
+        """Updates the mouse position based on the data in the plot. For
         dynamic plots, this is called each time the data changes to ensure
         the x and y values correspond to those on the display.
         """
@@ -216,9 +235,63 @@ class Crosshairs(QtCore.QObject):
             self.horizontal.setPos(mouse_point.y())
 
     def mouseMoved(self, event=None):
-        """ Updates the mouse position upon mouse movement """
+        """Updates the mouse position upon mouse movement"""
         if event is not None:
             self.position = event[0]
             self.update()
         else:
             raise Exception("Mouse location not known")
+
+
+# class DisplayValues(QtCore.QObject):
+#     """Attaches Values to the a plot and provides a signal with the
+#     x and y graph coordinates
+#     """
+
+#     yvalues = QtCore.QSignal(float, float)
+
+#     def __init__(self, plot, pen=None):
+#         """Initiates the crosshars onto a plot given the pen style.
+
+#         Example pen:
+#         pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.DashLine)
+#         """
+#         super().__init__()
+
+#         # self.vertical = pg.InfiniteLine(angle=90, movable=False, pen=pen)
+#         # self.horizontal = pg.InfiniteLine(angle=0, movable=False, pen=pen)
+#         # plot.addItem(self.vertical, ignoreBounds=True)
+#         # plot.addItem(self.horizontal, ignoreBounds=True)
+
+#         self.position = None
+#         self.proxy = pg.SignalProxy(
+#             plot.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved
+#         )
+#         self.plot = plot
+
+#     # def hide(self):
+#     #     self.vertical.hide()
+#     #     self.horizontal.hide()
+
+#     # def show(self):
+#     #     self.vertical.show()
+#     #     self.horizontal.show()
+
+#     def update(self):
+#         """Updates the mouse position based on the data in the plot. For
+#         dynamic plots, this is called each time the data changes to ensure
+#         the x and y values correspond to those on the display.
+#         """
+#         if self.position is not None:
+#             mouse_point = self.plot.vb.mapSceneToView(self.position)
+#             self.values.emit(mouse_point.x(), mouse_point.y())
+#             # self.vertical.setPos(mouse_point.x())
+#             # self.horizontal.setPos(mouse_point.y())
+
+#     def mouseMoved(self, event=None):
+#         """Updates the mouse position upon mouse movement"""
+#         if event is not None:
+#             self.position = event[0]
+#             self.update()
+#         else:
+#             raise Exception("Mouse location not known")

@@ -26,6 +26,7 @@
 from setuptools import setup, find_packages
 
 setup(
+<<<<<<< HEAD
     name='PyMeasure',
     version='0.10.0',
     author='PyMeasure Developers',
@@ -37,28 +38,35 @@ setup(
     description='Scientific measurement library for instruments, experiments, and live-plotting',
     long_description=open('README.rst').read() + "\n\n" + open('CHANGES.txt').read(),
     long_description_content_type='text/x-rst',
+=======
+    name="PyMeasure",
+    version="0.9.0+TUBSv0.0.1",
+    author="PyMeasure Developers + mvergin",
+    packages=find_packages(),
+    scripts=[],
+    url="https://github.com/mvergin/pymeasure",
+    # download_url="https://github.com/pymeasure/pymeasure/tarball/v0.9.0",
+    license="MIT License",
+    description="Scientific measurement library for instruments, experiments, and live-plotting",
+    long_description=open("README.rst").read() + "\n\n" + open("CHANGES.txt").read(),
+>>>>>>> 86544b0 (Modifying pymeasure to add ...)
     install_requires=[
         "numpy >= 1.6.1",
         "pandas >= 0.14",
         "pyvisa >= 1.8",
         "pyserial >= 2.7",
-        "pyqtgraph >= 0.9.10"
+        "pyqtgraph >= 0.9.10",
     ],
     extras_require={
-        'matplotlib': ['matplotlib >= 2.0.2'],
-        'tcp': [
-            'pyzmq >= 16.0.2',
-            'cloudpickle >= 0.3.1'
-        ],
-        'python-vxi11': ['python-vxi11 >= 0.9']
+        "matplotlib": ["matplotlib >= 2.0.2"],
+        "tcp": ["pyzmq >= 16.0.2", "cloudpickle >= 0.3.1"],
+        "python-vxi11": ["python-vxi11 >= 0.9"],
     },
-    setup_requires=[
-        'pytest-runner'
-    ],
+    setup_requires=["pytest-runner"],
     tests_require=[
-        'pytest >= 2.9.1',
-        'pytest-qt >= 2.4.0',
-        'pyvisa-sim >= 0.4.0',
+        "pytest >= 2.9.1",
+        "pytest-qt >= 2.4.0",
+        "pyvisa-sim >= 0.4.0",
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -75,5 +83,5 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Topic :: Scientific/Engineering",
     ],
-    keywords="measure instrument experiment control automate graph plot"
+    keywords="measure instrument experiment control automate graph plot",
 )

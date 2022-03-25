@@ -36,12 +36,21 @@ log.addHandler(logging.NullHandler())
 
 
 class PlotWidget(TabWidget, QtGui.QWidget):
-    """ Extends :class:`PlotFrame<pymeasure.display.widgets.plot_frame.PlotFrame>`
+    """Extends :class:`PlotFrame<pymeasure.display.widgets.plot_frame.PlotFrame>`
     to allow different columns of the data to be dynamically chosen
     """
 
-    def __init__(self, name, columns, x_axis=None, y_axis=None, refresh_time=0.2,
-                 check_status=True, linewidth=1, parent=None):
+    def __init__(
+        self,
+        name,
+        columns,
+        x_axis=None,
+        y_axis=None,
+        refresh_time=0.2,
+        check_status=True,
+        linewidth=1,
+        parent=None,
+    ):
         super().__init__(name, parent)
         self.columns = columns
         self.refresh_time = refresh_time
@@ -59,10 +68,10 @@ class PlotWidget(TabWidget, QtGui.QWidget):
     def _setup_ui(self):
         self.columns_x_label = QtGui.QLabel(self)
         self.columns_x_label.setMaximumSize(QtCore.QSize(45, 16777215))
-        self.columns_x_label.setText('X Axis:')
+        self.columns_x_label.setText("X Axis:")
         self.columns_y_label = QtGui.QLabel(self)
         self.columns_y_label.setMaximumSize(QtCore.QSize(45, 16777215))
-        self.columns_y_label.setText('Y Axis:')
+        self.columns_y_label.setText("Y Axis:")
 
         self.columns_x = QtGui.QComboBox(self)
         self.columns_y = QtGui.QComboBox(self)
@@ -73,10 +82,7 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         self.columns_y.activated.connect(self.update_y_column)
 
         self.plot_frame = PlotFrame(
-            self.columns[0],
-            self.columns[1],
-            self.refresh_time,
-            self.check_status
+            self.columns[0], self.columns[1], self.refresh_time, self.check_status
         )
         self.updated = self.plot_frame.updated
         self.plot = self.plot_frame.plot
@@ -103,15 +109,14 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         return QtCore.QSize(300, 600)
 
     def new_curve(self, results, color=pg.intColor(0), **kwargs):
-        if 'pen' not in kwargs:
-            kwargs['pen'] = pg.mkPen(color=color, width=self.linewidth)
-        if 'antialias' not in kwargs:
-            kwargs['antialias'] = False
-        curve = ResultsCurve(results,
-                             x=self.plot_frame.x_axis,
-                             y=self.plot_frame.y_axis,
-                             **kwargs
-                             )
+        if "pen" not in kwargs:
+            kwargs["pen"] = pg.mkPen(color=color, width=self.linewidth)
+        if "antialias" not in kwargs:
+            kwargs["antialias"] = False
+        curve = ResultsCurve(
+            results, x=self.plot_frame.x_axis, y=self.plot_frame.y_axis, **kwargs
+        )
+        curve.new_values.connect(self.plot_frame.update_values)
         curve.setSymbol(None)
         curve.setSymbolBrush(None)
         return curve
@@ -134,6 +139,6 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         self.plot.removeItem(curve)
 
     def set_color(self, curve, color):
-        """ Change the color of the pen of the curve """
+        """Change the color of the pen of the curve"""
         curve.pen.setColor(color)
         curve.updateItems(styleUpdate=True)
