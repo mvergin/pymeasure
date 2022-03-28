@@ -35,7 +35,7 @@ setup(
     # download_url="https://github.com/pymeasure/pymeasure/tarball/v0.9.0",
     license="MIT License",
     description="Scientific measurement library for instruments, experiments, and live-plotting",
-    long_description=open("README.rst").read() + "\n\n" + open("CHANGES.txt").read(),
+    long_description=open("README.md").read() + "\n\n" + open("CHANGES.txt").read(),
     install_requires=[
         "numpy >= 1.6.1",
         "pandas >= 0.14",
