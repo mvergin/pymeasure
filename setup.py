@@ -26,46 +26,16 @@
 from setuptools import setup, find_packages
 
 setup(
-<<<<<<< HEAD
     name="PyMeasure",
-    version="0.9.0+TUBSv0.0.1",
+    version="0.10.0+TUBSv0.0.1",
     author="PyMeasure Developers + mvergin",
     packages=find_packages(),
     scripts=[],
-=======
-<<<<<<< HEAD
-    name='PyMeasure',
-    version='0.10.0',
-    author='PyMeasure Developers',
-    packages=find_packages(),
-    scripts=[],
-    url='https://github.com/pymeasure/pymeasure',
-    download_url='https://github.com/pymeasure/pymeasure/tarball/v0.10.0',
-    license='MIT License',
-    description='Scientific measurement library for instruments, experiments, and live-plotting',
-    long_description=open('README.rst').read() + "\n\n" + open('CHANGES.txt').read(),
-    long_description_content_type='text/x-rst',
-=======
-    name="PyMeasure",
-    version="0.9.0+TUBSv0.0.1",
-    author="PyMeasure Developers + mvergin",
-    packages=find_packages(),
-    scripts=[],
->>>>>>> pymeasure-master
     url="https://github.com/mvergin/pymeasure",
     # download_url="https://github.com/pymeasure/pymeasure/tarball/v0.9.0",
     license="MIT License",
     description="Scientific measurement library for instruments, experiments, and live-plotting",
-<<<<<<< HEAD
     long_description=open("README.md").read() + "\n\n" + open("CHANGES.txt").read(),
-=======
-<<<<<<< HEAD
-    long_description=open("README.rst").read() + "\n\n" + open("CHANGES.txt").read(),
->>>>>>> 86544b0 (Modifying pymeasure to add ...)
-=======
-    long_description=open("README.md").read() + "\n\n" + open("CHANGES.txt").read(),
->>>>>>> 2dc859c (readme change)
->>>>>>> pymeasure-master
     install_requires=[
         "numpy >= 1.6.1",
         "pandas >= 0.14",
