@@ -248,7 +248,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
             self.directory_label = QtGui.QLabel(self)
             self.directory_label.setText("Directory")
             self.directory_line = DirectoryLineEdit(parent=self)
-            self.sample_name = QtGui.QLineEdit(self)
+            self.sample_name_line = QtGui.QLineEdit(self)
 
         self.queue_button = QtGui.QPushButton("Queue", self)
         self.queue_button.clicked.connect(self._queue)
@@ -314,7 +314,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
             vbox = QtGui.QVBoxLayout()
             vbox.addWidget(self.directory_label)
             vbox.addWidget(self.directory_line)
-            vbox.addWidget(self.sample_name)
+            vbox.addWidget(self.sample_name_line)
             vbox.addLayout(hbox)
 
         if self.inputs_in_scrollarea:
@@ -650,8 +650,19 @@ class ManagedWindowBase(QtGui.QMainWindow):
     def directory(self, value):
         if not self.directory_input:
             raise ValueError("No directory input in the ManagedWindow")
-
         self.directory_line.setText(str(value))
+
+    @property
+    def sample_name(self):
+        if not self.directory_input:
+            raise ValueError("No directory input in the ManagedWindow")
+        return self.sample_name_line.text()
+
+    @sample_name.setter
+    def sample_name(self, value):
+        if not self.directory_input:
+            raise ValueError("No directory input in the ManagedWindow")
+        self.sample_name_line.setText(str(value))
 
 
 class ManagedWindow(ManagedWindowBase):
