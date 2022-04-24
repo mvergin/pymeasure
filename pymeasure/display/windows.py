@@ -248,6 +248,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
             self.directory_label = QtGui.QLabel(self)
             self.directory_label.setText("Directory")
             self.directory_line = DirectoryLineEdit(parent=self)
+            self.sample_name = QtGui.QLineEdit(self)
 
         self.queue_button = QtGui.QPushButton("Queue", self)
         self.queue_button.clicked.connect(self._queue)
@@ -313,6 +314,7 @@ class ManagedWindowBase(QtGui.QMainWindow):
             vbox = QtGui.QVBoxLayout()
             vbox.addWidget(self.directory_label)
             vbox.addWidget(self.directory_line)
+            vbox.addWidget(self.sample_name)
             vbox.addLayout(hbox)
 
         if self.inputs_in_scrollarea:
