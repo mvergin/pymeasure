@@ -28,28 +28,26 @@ import re
 import pyqtgraph as pg
 
 from ..curves import ResultsCurve, Crosshairs
-from ..Qt import QtCore, QtGui
+from ..Qt import QtCore, QtWidgets
 from ...experiment import Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class PlotFrame(QtGui.QFrame):
+class PlotFrame(QtWidgets.QFrame):
     """Combines a PyQtGraph Plot with Crosshairs. Refreshes
     the plot based on the refresh_time, and allows the axes
     to be changed on the fly, which updates the plotted data
     """
 
     LABEL_STYLE = {"font-size": "10pt", "font-family": "Arial", "color": "#000000"}
-    updated = QtCore.QSignal()
+    updated = QtCore.Signal()
     ResultsClass = ResultsCurve
-    x_axis_changed = QtCore.QSignal(str)
-    y_axis_changed = QtCore.QSignal(str)
+    x_axis_changed = QtCore.Signal(str)
+    y_axis_changed = QtCore.Signal(str)
 
-    def __init__(
-        self, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True, parent=None
-    ):
+    def __init__(self, x_axis=None, y_axis=None, refresh_time=0.2, check_status=True, parent=None):
         super().__init__(parent)
         self.refresh_time = refresh_time
         self.check_status = check_status
@@ -60,25 +58,27 @@ class PlotFrame(QtGui.QFrame):
     def _setup_ui(self):
         self.setAutoFillBackground(False)
         self.setStyleSheet("background: #fff")
-        self.setFrameShape(QtGui.QFrame.StyledPanel)
-        self.setFrameShadow(QtGui.QFrame.Sunken)
+        self.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
+        self.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
         self.setMidLineWidth(1)
 
-        vbox = QtGui.QVBoxLayout(self)
-        hbox = QtGui.QHBoxLayout()
+        vbox = QtWidgets.QVBoxLayout(self)
+        hbox = QtWidgets.QHBoxLayout()
 
         self.plot_widget = pg.PlotWidget(self, background="#ffffff")
-        self.values = QtGui.QLabel(self)
+        self.values = QtWidgets.QLabel(self)
         self.values.setMinimumSize(QtCore.QSize(0, 20))
         self.values.setStyleSheet("background: #fff")
         self.values.setText("TUBS powered")
         self.values.setAlignment(QtCore.Qt.AlignLeft)
-        self.coordinates = QtGui.QLabel(self)
+        self.coordinates = QtWidgets.QLabel(self)
         self.coordinates.setMinimumSize(QtCore.QSize(0, 20))
         self.coordinates.setStyleSheet("background: #fff")
         self.coordinates.setText("")
         self.coordinates.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter
+            QtCore.Qt.AlignmentFlag.AlignRight
+            | QtCore.Qt.AlignmentFlag.AlignTrailing
+            | QtCore.Qt.AlignmentFlag.AlignVCenter
         )
 
         vbox.addWidget(self.plot_widget)
@@ -91,7 +91,7 @@ class PlotFrame(QtGui.QFrame):
         self.plot = self.plot_widget.getPlotItem()
 
         self.crosshairs = Crosshairs(
-            self.plot, pen=pg.mkPen(color="#AAAAAA", style=QtCore.Qt.DashLine)
+            self.plot, pen=pg.mkPen(color="#AAAAAA", style=QtCore.Qt.PenStyle.DashLine)
         )
         self.crosshairs.coordinates.connect(self.update_coordinates)
         self.timer = QtCore.QTimer()

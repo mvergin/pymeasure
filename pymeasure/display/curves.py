@@ -32,16 +32,6 @@ from .Qt import QtCore
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-try:
-    from matplotlib.cm import viridis
-except ImportError:
-    log.warning("Matplotlib not found. Images will be greyscale")
-
-
-def _greyscale_colormap(x):
-    """Simple greyscale colormap. Assumes x is already normalized."""
-    return np.array([x, x, x, 1])
-
 
 class ResultsCurve(pg.PlotDataItem):
     """Creates a curve loaded dynamically from a file through the Results object. The data can
@@ -130,9 +120,7 @@ class ResultsImage(pg.ImageItem):
             xdat = row[self.x]
             ydat = row[self.y]
             xidx, yidx = self.find_img_index(xdat, ydat)
-            self.img_data[yidx, xidx, :] = self.colormap(
-                (row[self.z] - zmin) / (zmax - zmin)
-            )
+            self.img_data[yidx, xidx, :] = self.colormap((row[self.z] - zmin) / (zmax - zmin))
 
         # set image data, need to transpose since pyqtgraph assumes column-major order
         self.setImage(image=np.transpose(self.img_data, axes=(1, 0, 2)))
@@ -157,13 +145,17 @@ class ResultsImage(pg.ImageItem):
         else:
             return int(x)
 
+    def colormap(self, x):
+        """Return mapped color as 0.0-1.0 floats RGBA"""
+        return self.cm.map(x, mode="float")
+
     # TODO: colormap selection
 
 
 class BufferCurve(pg.PlotDataItem):
     """Creates a curve based on a predefined buffer size and allows data to be added dynamically."""
 
-    data_updated = QtCore.QSignal()
+    data_updated = QtCore.Signal()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -194,13 +186,13 @@ class Crosshairs(QtCore.QObject):
     x and y graph coordinates
     """
 
-    coordinates = QtCore.QSignal(float, float)
+    coordinates = QtCore.Signal(float, float)
 
     def __init__(self, plot, pen=None):
         """Initiates the crosshars onto a plot given the pen style.
 
         Example pen:
-        pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.DashLine)
+        pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.PenStyle.DashLine)
         """
         super().__init__()
 
@@ -210,9 +202,7 @@ class Crosshairs(QtCore.QObject):
         plot.addItem(self.horizontal, ignoreBounds=True)
 
         self.position = None
-        self.proxy = pg.SignalProxy(
-            plot.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved
-        )
+        self.proxy = pg.SignalProxy(plot.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved)
         self.plot = plot
 
     def hide(self):
