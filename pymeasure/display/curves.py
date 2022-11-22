@@ -39,7 +39,7 @@ class ResultsCurve(pg.PlotDataItem):
     the full file instead of just appending.
     """
 
-    new_values = QtCore.QSignal(pd.DataFrame)
+    new_values = QtCore.Signal(pd.DataFrame)
 
     def __init__(self, results, x, y, force_reload=False, num_of_points=None, **kwargs):
         super().__init__(**kwargs)
@@ -94,9 +94,9 @@ class ResultsImage(pg.ImageItem):
         self.img_data = np.zeros((self.ysize, self.xsize, 4))
         self.force_reload = force_reload
         if "matplotlib.cm" in sys.modules:
-            self.colormap = viridis
+            self.colormap = "viridis"
         else:
-            self.colormap = _greyscale_colormap
+            self.colormap = "_greyscale_colormap"
 
         super().__init__(image=self.img_data)
 
